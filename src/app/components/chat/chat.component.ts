@@ -114,6 +114,7 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
   messages: any[] = [];
   lastTextChunk: string = '';
   streamingTextMessage: any | null = null;
+  streamingThoughtMessage: any | null = null;
   latestThought: string = '';
   artifacts: any[] = [];
   userInput: string = '';
@@ -423,20 +424,44 @@ export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
     if (part.text) {
       this.isModelThinkingSubject.next(false);
       const newChunk = part.text;
-      if (part.thought) {
-        if (newChunk !== this.latestThought) {
-          this.storeEvents(part, chunkJson, index);
-          let thoughtMessage = {
+      if (!chunkJson.partial && newChunk !== this.streamingTextMessage.text){
+        this.streamingTextMessage = null;
+        this.streamingThoughtMessage = null;
+        var singleMessage = {
+          role: 'bot',
+          text: this.processThoughtText(newChunk),
+          thought: part.thought,
+          eventId: chunkJson.id
+        }
+
+        this.insertMessageBeforeLoadingMessage(singleMessage);
+      } else if (part.thought) {
+        // if (newChunk !== this.latestThought) {
+        //   this.storeEvents(part, chunkJson, index);
+        //   let thoughtMessage = {
+        //     role: 'bot',
+        //     text: this.processThoughtText(newChunk),
+        //     thought: true,
+        //     eventId: chunkJson.id
+        //   };
+
+        //   this.insertMessageBeforeLoadingMessage(thoughtMessage);
+        // }
+        // this.latestThought = newChunk;
+        if(!this.streamingThoughtMessage) {
+          this.streamingTextMessage = null
+          this.streamingThoughtMessage = {
             role: 'bot',
             text: this.processThoughtText(newChunk),
             thought: true,
             eventId: chunkJson.id
           };
-
-          this.insertMessageBeforeLoadingMessage(thoughtMessage);
+          this.insertMessageBeforeLoadingMessage(this.streamingThoughtMessage);
+        } else {
+          this.streamingThoughtMessage.text += newChunk;
         }
-        this.latestThought = newChunk;
       } else if (!this.streamingTextMessage) {
+        this.streamingThoughtMessage = null
         this.streamingTextMessage = {
           role: 'bot',
           text: this.processThoughtText(newChunk),

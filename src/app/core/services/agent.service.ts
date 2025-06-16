@@ -110,6 +110,8 @@ export class AgentService {
   }
 
   listApps(): Observable<string[]> {
+    console.log('Hello World');
+    
     if (this.apiServerDomain != undefined) {
       const url = this.apiServerDomain + `/list-apps?relative_path=./`;
       return this.http.get<string[]>(url);
